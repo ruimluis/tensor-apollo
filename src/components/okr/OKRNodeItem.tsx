@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, MoreHorizontal, Trash2, Edit2, CornerDownRight, Crosshair, Minimize2, Hash, Percent, ListChecks, CheckCircle2, MessageCircle, TrendingUp, TrendingDown, PlayCircle, Target, Clock } from 'lucide-react';
+import { ChevronRight, MoreHorizontal, Trash2, Edit2, CornerDownRight, Crosshair, Minimize2, Hash, Percent, ListChecks, CheckCircle2, MessageCircle, TrendingUp, TrendingDown, PlayCircle, Target, Clock, AlertCircle } from 'lucide-react';
 import { OKRNode, NODE_COLORS, NODE_LABELS } from '@/types';
 import { useOKRStore } from '@/store/useOKRStore';
 import { cn } from '@/lib/utils';
@@ -7,13 +7,20 @@ import { Drawer } from '@/components/ui/Drawer';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { CreateOKRForm } from '@/components/okr/CreateOKRForm';
 
+import { Tooltip } from '@/components/ui/Tooltip';
+import { HighlightText } from '@/components/ui/HighlightText';
+
 interface OKRNodeItemProps {
     node: OKRNode;
     level: number;
+    nodes?: OKRNode[]; // specific set of nodes (e.g. filtered)
+    searchTerm?: string;
 }
 
-export function OKRNodeItem({ node, level }: OKRNodeItemProps) {
-    const { nodes, toggleExpand, deleteNode, focusedNodeId, setFocusedNodeId } = useOKRStore();
+export function OKRNodeItem({ node, level, nodes: propNodes, searchTerm }: OKRNodeItemProps) {
+    const { nodes: storeNodes, toggleExpand, deleteNode, focusedNodeId, setFocusedNodeId } = useOKRStore();
+    const effectiveNodes = propNodes || storeNodes;
+
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -21,8 +28,15 @@ export function OKRNodeItem({ node, level }: OKRNodeItemProps) {
     const [editModalTab, setEditModalTab] = useState<'details' | 'progress' | 'discussion'>('details');
 
     // Find children
-    const children = nodes.filter(n => n.parentId === node.id);
+    const children = effectiveNodes.filter(n => n.parentId === node.id);
     const hasChildren = children.length > 0;
+
+    // Date Mismatch Check
+    const dateMismatch = (node.type === 'KEY_RESULT' && node.endDate) ? children.find(n =>
+        n.type === 'TASK' &&
+        n.endDate &&
+        n.endDate > node.endDate!
+    ) : null;
 
     const handleDeleteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -68,14 +82,27 @@ export function OKRNodeItem({ node, level }: OKRNodeItemProps) {
 
                 <div className="flex-1 min-w-0 mr-4">
                     <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm truncate">{node.title}</span>
+                        <span className="font-medium text-sm truncate">
+                            <HighlightText text={node.title} highlight={searchTerm || ''} />
+                        </span>
                     </div>
-                    {node.description && <p className="text-xs text-muted-foreground truncate">{node.description}</p>}
+                    {node.description && (
+                        <p className="text-xs text-muted-foreground truncate">
+                            <HighlightText text={node.description} highlight={searchTerm || ''} />
+                        </p>
+                    )}
                     <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground mt-1 items-center">
-                        <div className="flex gap-2">
+                        <div className={cn("flex gap-2 items-center", dateMismatch && "text-red-500")}>
                             <span>{node.startDate ? new Date(node.startDate).toLocaleDateString() : 'No start'}</span>
                             <span>-</span>
                             <span>{node.endDate ? new Date(node.endDate).toLocaleDateString() : 'No end'}</span>
+                            {dateMismatch && (
+                                <Tooltip content={`Warning: Task "${dateMismatch.title}" ends after KR end date`}>
+                                    <div className="text-red-500 ml-1 cursor-help">
+                                        <AlertCircle className="h-3 w-3" />
+                                    </div>
+                                </Tooltip>
+                            )}
                         </div>
                         {node.type === 'TASK' && (
                             <>
@@ -123,17 +150,17 @@ export function OKRNodeItem({ node, level }: OKRNodeItemProps) {
                                     }
 
                                     // Recursive Case: GOAL or OBJECTIVE
-                                    // Find children of this specific targetNode
-                                    const targetChildren = nodes.filter(n => n.parentId === targetNode.id);
+                                    // Find children of this specific targetNode using storeNodes to count ALL children
+                                    const targetChildren = storeNodes.filter((n: OKRNode) => n.parentId === targetNode.id);
 
                                     // Filter relevant children types
                                     const relevantChildren = targetNode.type === 'GOAL'
-                                        ? targetChildren.filter(c => c.type === 'OBJECTIVE')
-                                        : targetChildren.filter(c => c.type === 'KEY_RESULT');
+                                        ? targetChildren.filter((c: OKRNode) => c.type === 'OBJECTIVE')
+                                        : targetChildren.filter((c: OKRNode) => c.type === 'KEY_RESULT');
 
                                     if (relevantChildren.length === 0) return 0;
 
-                                    const totalPct = relevantChildren.reduce((acc, child) => acc + calculateAchievement(child), 0);
+                                    const totalPct = relevantChildren.reduce((acc: number, child: OKRNode) => acc + calculateAchievement(child), 0);
                                     return totalPct / relevantChildren.length;
                                 };
 
@@ -325,7 +352,7 @@ export function OKRNodeItem({ node, level }: OKRNodeItemProps) {
                 node.expanded && hasChildren && (
                     <div className="flex flex-col">
                         {children.map(child => (
-                            <OKRNodeItem key={child.id} node={child} level={level + 1} />
+                            <OKRNodeItem key={child.id} node={child} level={level + 1} nodes={effectiveNodes} searchTerm={searchTerm} />
                         ))}
                     </div>
                 )

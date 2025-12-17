@@ -17,9 +17,12 @@ import CustomNode from './CustomNode';
 import { OKRNode } from '@/types';
 import { Layers, ChevronUp, ChevronDown, Download } from 'lucide-react';
 import { toPng } from 'html-to-image';
+import { FilterBar, FilterState } from './FilterBar';
 
+// ... (keep getLayoutedElements as is)
 // Simple tree layout algorithm
 const getLayoutedElements = (nodes: OKRNode[], maxDepth: number, onFocus: (id: string) => void) => {
+    // ... (same as existing)
     const layoutedNodes: Node[] = [];
     const layoutedEdges: Edge[] = [];
 
@@ -41,7 +44,7 @@ const getLayoutedElements = (nodes: OKRNode[], maxDepth: number, onFocus: (id: s
     });
 
     const LEVEL_WIDTH = 400;
-    const NODE_HEIGHT = 150;
+    const NODE_HEIGHT = 220;
 
     let globalY = 0;
 
@@ -118,14 +121,123 @@ function OKRGraphViewContent() {
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [maxDepth, setMaxDepth] = useState(3);
     const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
+    const [filters, setFilters] = useState<FilterState>({
+        search: '',
+        teamId: '',
+        ownerId: '',
+        goalId: '',
+        objectiveId: '',
+        keyResultId: ''
+    });
+
     const { fitView, getNodes } = useReactFlow();
 
-    // Filter nodes based on focus
+    // 1. Apply Filters (Match + Ancestors + Descendants for Drill Down)
+    const filteredNodes = useMemo(() => {
+        const hasActiveFilters = filters.search || filters.teamId || filters.ownerId || filters.goalId || filters.objectiveId || filters.keyResultId;
+        if (!hasActiveFilters) return okrNodes;
+
+        // Determine if we are in "Drill Down" mode (hierarchical filter) or just property filter
+        // If goalId/objectiveId/keyResultId is set, we want to show the Subtree of that node.
+
+        let rootId: string | null = null;
+        if (filters.keyResultId) rootId = filters.keyResultId;
+        else if (filters.objectiveId) rootId = filters.objectiveId;
+        else if (filters.goalId) rootId = filters.goalId;
+
+        // Phase 1: Filter by Root Subtree (if Drill Down active)
+        let subset = okrNodes;
+        if (rootId) {
+            // Get all descendants of rootId, PLUS rootId itself
+            const hierarchy: Record<string, string[]> = {};
+            okrNodes.forEach(n => {
+                if (n.parentId) {
+                    if (!hierarchy[n.parentId]) hierarchy[n.parentId] = [];
+                    hierarchy[n.parentId].push(n.id);
+                }
+            });
+
+            const descendants = new Set<string>();
+            const traverse = (id: string) => {
+                descendants.add(id);
+                const children = hierarchy[id] || [];
+                children.forEach(childId => traverse(childId));
+            };
+            traverse(rootId);
+
+            subset = okrNodes.filter(n => descendants.has(n.id));
+        }
+
+        // Phase 2: Apply Property Filters (Search, Team, Owner) to the subset
+        // Note: Team usually filters Goals, but if we select a Team, should we filter everything?
+        // If a Goal belongs to Team A, its children implicitly belong to Team A context.
+        // But if filtering by TeamId explicitly, we might want to check the node's teamId?
+        // Let's stick to: If TeamId set, strict filter on node.teamId? 
+        // OR: If TeamId set, show all nodes that belong to that team OR have ancestors in that team?
+        // Simplest interpretation of "Filter": Show nodes that match.
+
+        const matches = subset.filter(node => {
+            const matchesSearch = !filters.search || (
+                (node.title?.toLowerCase().includes(filters.search.toLowerCase())) ||
+                (node.description?.toLowerCase().includes(filters.search.toLowerCase()))
+            );
+
+            // Team Filter: 
+            // If we are in Drill Down (rootId set), we assume the user already drilled via Team -> Goal.
+            // But if only Team is selected (no rootId), show nodes with that teamId? 
+            // Better: If Team selected, valid start nodes must match team.
+            // Let's support strict matching for Team/Owner on top of Drill Down.
+            const matchesTeam = !filters.teamId || node.teamId === filters.teamId;
+            const matchesOwner = !filters.ownerId || node.owner === filters.ownerId;
+
+            // Exception: If we have a RootID drilldown, we might NOT want to strict filter Team on children 
+            // if children don't inherit the teamId property explicitly in current data model.
+            // But usually they do or it's fine. 
+            // Let's relax Team filter if RootID is set? NO, assume consistency.
+
+            return matchesSearch && matchesTeam && matchesOwner;
+        });
+
+        // Phase 3: Restore structure (Ancestors) for visualization
+        // If we strictly matched nodes, we need their parents to draw the tree context for generic filters.
+        // For Drill Down (RootID), we already have the subtree, but if we filtered inside it (e.g. Search),
+        // we might have broken links.
+
+        // If RootID is set, we want to see the Subtree. 
+        // Does "Search" filter WITHIN the subtree? Yes.
+        // If Search filters within subtree, we still need path to RootID?
+
+        const resultIds = new Set<string>();
+        matches.forEach(match => {
+            let current: OKRNode | undefined = match;
+            while (current) {
+                resultIds.add(current.id);
+                // Stop adding ancestors if we hit the Drill Down Root (optional optimization, but visual context is good)
+                if (rootId && current.id === rootId) break;
+
+                if (current.parentId) {
+                    current = okrNodes.find(n => n.id === current!.parentId);
+                } else {
+                    current = undefined;
+                }
+            }
+        });
+
+        return subset.filter(n => resultIds.has(n.id)); // Subset intersection to ensure we don't leak outside drilldown
+    }, [okrNodes, filters]);
+
+    // 2. Apply Focus Logic on top of Filtered Nodes
     const visibleNodes = useMemo(() => {
-        if (!focusedNodeId) return okrNodes;
+        const baseNodes = filteredNodes;
+        if (!focusedNodeId) return baseNodes;
+
+        // If filtered set doesn't contain the focused node (e.g. filtered out), reset focus?
+        // Or just show nothing? Let's assume user might want to clear focus.
+        // For now, if focused node is gone, we effectively show nothing or partial tree.
+        // Let's proceed with standard logic: descendants of focusedNode within baseNodes.
 
         const hierarchy: Record<string, OKRNode[]> = {};
-        okrNodes.forEach(node => {
+        baseNodes.forEach(node => {
             if (node.parentId) {
                 if (!hierarchy[node.parentId]) hierarchy[node.parentId] = [];
                 hierarchy[node.parentId].push(node);
@@ -139,11 +251,11 @@ function OKRGraphViewContent() {
             children.forEach(child => traverse(child.id));
         };
 
-        const root = okrNodes.find(n => n.id === focusedNodeId);
+        const root = baseNodes.find(n => n.id === focusedNodeId);
         if (root) traverse(root.id);
 
-        return okrNodes.filter(n => descendants.has(n.id));
-    }, [okrNodes, focusedNodeId]);
+        return baseNodes.filter(n => descendants.has(n.id));
+    }, [filteredNodes, focusedNodeId]);
 
 
     // Calculate actual tree depth to clamp maxDepth
@@ -175,8 +287,14 @@ function OKRGraphViewContent() {
     }, [visibleNodes]);
 
     useEffect(() => {
+        // Inject searchTerm into nodes before layout
+        const nodesWithSearch = visibleNodes.map(n => ({
+            ...n,
+            searchTerm: filters.search
+        }));
+
         const { nodes: layoutNodes, edges: layoutEdges } = getLayoutedElements(
-            visibleNodes,
+            nodesWithSearch,
             maxDepth,
             (id) => setFocusedNodeId(id)
         );
@@ -263,9 +381,18 @@ function OKRGraphViewContent() {
                 </Controls>
             </ReactFlow>
 
-            {/* Reset Focus Button */}
+            {/* Filter Bar */}
+            <div className="absolute top-4 left-4 z-10">
+                <FilterBar
+                    filters={filters}
+                    onFilterChange={setFilters}
+                    nodes={okrNodes}
+                />
+            </div>
+
+            {/* Reset Focus Button (Moved down slightly to avoid overlap if needed, or placed next to filter) */}
             {focusedNodeId && (
-                <div className="absolute top-4 left-4 z-10 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="absolute top-4 right-16 z-10 animate-in fade-in slide-in-from-top-4 duration-300">
                     <button
                         onClick={() => setFocusedNodeId(null)}
                         className="bg-card border border-border px-3 py-1.5 rounded-md shadow-lg text-sm font-medium flex items-center gap-2 hover:bg-muted transition-colors"

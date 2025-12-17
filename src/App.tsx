@@ -9,6 +9,8 @@ import { Drawer } from '@/components/ui/Drawer';
 import { CreateOKRForm } from '@/components/okr/CreateOKRForm';
 import { OrganizationPage } from '@/components/organization/OrganizationPage';
 import { ToastProvider } from '@/components/ui/Toast';
+import { TasksPage } from '@/components/tasks/TasksPage';
+import { SchedulingPage } from '@/components/scheduling/SchedulingPage';
 
 function AppContent() {
     const [currentView, setCurrentView] = useState('okrs');
@@ -73,11 +75,19 @@ function AppContent() {
                     </div>
                 )}
 
+                {currentView === 'tasks' && (
+                    <TasksPage />
+                )}
+
+                {currentView === 'scheduling' && (
+                    <SchedulingPage />
+                )}
+
                 {currentView === 'organization' && (
                     <OrganizationPage />
                 )}
 
-                {currentView !== 'okrs' && currentView !== 'organization' && (
+                {currentView !== 'okrs' && currentView !== 'organization' && currentView !== 'tasks' && currentView !== 'scheduling' && (
                     <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground">
                         <h2 className="text-2xl font-semibold mb-2">Work in Progress</h2>
                         <p>The {currentView} view is under construction.</p>

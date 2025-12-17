@@ -32,6 +32,7 @@ export interface OKRNode {
     onFocus?: (id: string) => void;
     createdAt: string;
     updatedAt: string;
+    dependencies?: string[]; // List of IDs that this node depends on
 }
 
 export interface OKRUpdate {

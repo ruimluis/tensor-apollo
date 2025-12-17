@@ -25,7 +25,7 @@ const getChildType = (parentType?: OKRType | null): OKRType => {
 };
 
 export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaultType, initialTab = 'details' }: CreateOKRModalProps) {
-    const { addNode, updateNode } = useOKRStore();
+    const { addNode, updateNode, updateTaskDependencies, nodes } = useOKRStore();
     const [loading, setLoading] = useState(false);
 
     const targetType = defaultType || getChildType(parentType);
@@ -57,6 +57,7 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
         metricAsc: initialData?.metricAsc !== undefined ? initialData.metricAsc : true,
         checklist: initialData?.checklist || [] as { text: string; checked: boolean }[],
         estimatedHours: initialData?.estimatedHours || undefined,
+        dependencies: initialData?.dependencies || [],
     });
 
     // Fetch Teams and Parent Data
@@ -153,6 +154,7 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
                 metricAsc: initialData?.metricAsc !== undefined ? initialData.metricAsc : true,
                 checklist: initialData?.checklist || [],
                 estimatedHours: initialData?.estimatedHours || undefined,
+                dependencies: initialData?.dependencies || [],
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -161,7 +163,6 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validation for Value Metric
         // Validation for Value Metric
         if ((formData.type === 'TASK' || formData.type === 'KEY_RESULT') && formData.metricType === 'value') {
             if (formData.metricAsc && formData.metricStart >= formData.metricTarget) {
@@ -180,14 +181,68 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
             }
         }
 
+        // VALIDATION: Task Dependencies
+        if (formData.type === 'TASK' && formData.dependencies.length > 0 && formData.startDate) {
+            const taskStart = new Date(formData.startDate).getTime();
+            const confusingDeps = nodes.filter(n => formData.dependencies.includes(n.id) && n.endDate);
+
+            for (const dep of confusingDeps) {
+                // Dependency End Date is INCLUSIVE. Start Date can be AFTER Dependency End Date.
+                // Logic: Task Start Date >= Dependency End Date ?? 
+                // Usually Task Start must be > Dependency End. Or >=?
+                // Let's assume strict succession: Start > End.
+                // Wait, if dependency ends at 5PM today, can I start at 9AM today? No.
+                // If dependency ends Today, can I start Today? Maybe. 
+                // Let's assert: Task Start Date must be >= Dependency End Date.
+                // Actually, standard is: Start Date >= Dependency's End Date.
+                // If checking only dates (no time), then Start Date >= End Date is fine?
+                // If Dep ends 2024-01-01. I start 2024-01-01. This implies concurrent work on that day?
+                // Or I can pick up immediately.
+                // Let's enforce: Task Start >= Dependency End.
+                // If Task Start < Dependency End, ERROR.
+
+                // Note: date input values are YYYY-MM-DD.
+                // new Date('2024-01-01').getTime() is UTC midnight.
+                const depEnd = new Date(dep.endDate!).getTime();
+
+                if (taskStart < depEnd) {
+                    setWarningModal({
+                        isOpen: true,
+                        message: `Dependency Violation: This task starts on ${formData.startDate}, but dependency "${dep.title}" ends on ${dep.endDate}. Tasks cannot start before their dependencies finish.`
+                    });
+                    return;
+                }
+            }
+        }
+
         setLoading(true);
 
         try {
-            if (isEditing && initialData?.id) {
-                await updateNode(initialData.id, formData as any);
+            // Find owner name for optimistic UI update
+            const ownerMember = teamMembers.find(m => m.id === formData.owner);
+            // Dependencies are handled separately, remove from payload if store addNode doesn't support them (it doesn't)
+            const { dependencies, ...mainPayload } = formData;
+            const payload = {
+                ...mainPayload,
+                ownerName: ownerMember?.name
+            };
+
+            let nodeId = initialData?.id;
+
+            if (isEditing && nodeId) {
+                await updateNode(nodeId, payload as any);
             } else {
-                await addNode(formData as any);
+                // For new nodes, we rely on optimistic updates usually, but here we need ID.
+                // We can't support dependency saving on creation easily without store refactor to return ID.
+                // We will save the node. Dependencies will be ignored for CREATE.
+                await addNode(payload as any);
             }
+
+            // Update Dependencies (Only if we have an ID)
+            if (nodeId && isEditing) {
+                await updateTaskDependencies(nodeId, formData.dependencies);
+            }
+
             onClose();
         } catch (error) {
             console.error(error);
@@ -480,8 +535,8 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
                                     value={formData.startDate}
                                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                                    min={parentDates?.start}
-                                    max={parentDates?.end}
+                                    min={formData.type !== 'TASK' ? parentDates?.start : undefined}
+                                    max={formData.type !== 'TASK' ? parentDates?.end : undefined}
                                 />
                             </div>
                             <div>
@@ -494,8 +549,8 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
                                         value={formData.endDate}
                                         onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                                         className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                                        min={formData.startDate || parentDates?.start}
-                                        max={parentDates?.end}
+                                        min={formData.startDate || (formData.type !== 'TASK' ? parentDates?.start : undefined)}
+                                        max={formData.type !== 'TASK' ? parentDates?.end : undefined}
                                     />
                                     <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                 </div>
@@ -504,21 +559,65 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
 
                         {/* Estimated Hours - Only for TASK */}
                         {formData.type === 'TASK' && (
-                            <div>
-                                <label className="block text-sm font-medium text-foreground mb-1">
-                                    Estimated Hours
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.5"
-                                        placeholder="e.g. 4"
-                                        value={formData.estimatedHours || ''}
-                                        onChange={(e) => setFormData({ ...formData, estimatedHours: e.target.value ? Number(e.target.value) : undefined })}
-                                        className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                                    />
-                                    <Clock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1">
+                                        Estimated Hours
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.5"
+                                            placeholder="e.g. 4"
+                                            value={formData.estimatedHours || ''}
+                                            onChange={(e) => setFormData({ ...formData, estimatedHours: e.target.value ? Number(e.target.value) : undefined })}
+                                            className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                        />
+                                        <Clock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1">
+                                        Dependencies (Blockers)
+                                    </label>
+                                    <div className="border border-border rounded-md p-2 bg-background max-h-40 overflow-y-auto">
+                                        {nodes
+                                            .filter(n =>
+                                                n.type === 'TASK' &&
+                                                n.id !== initialData?.id // Cannot depend on self
+                                                // Ideally check for circular refs, but basic check covers self
+                                            )
+                                            .map(task => (
+                                                <div key={task.id} className="flex items-center gap-2 py-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`dep-${task.id}`}
+                                                        checked={formData.dependencies.includes(task.id)}
+                                                        onChange={(e) => {
+                                                            const isChecked = e.target.checked;
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                dependencies: isChecked
+                                                                    ? [...prev.dependencies, task.id]
+                                                                    : prev.dependencies.filter(id => id !== task.id)
+                                                            }));
+                                                        }}
+                                                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                                                    />
+                                                    <label htmlFor={`dep-${task.id}`} className="text-sm cursor-pointer flex-1 truncate">
+                                                        {task.title}
+                                                        {task.endDate && <span className="text-muted-foreground text-xs ml-2">(Ends {new Date(task.endDate).toLocaleDateString()})</span>}
+                                                    </label>
+                                                </div>
+                                            ))
+                                        }
+                                        {nodes.filter(n => n.type === 'TASK' && n.id !== initialData?.id).length === 0 && (
+                                            <p className="text-xs text-muted-foreground p-1">No other tasks available.</p>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground mt-1">This task cannot start until selected tasks are finished.</p>
                                 </div>
                             </div>
                         )}

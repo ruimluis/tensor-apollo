@@ -1,33 +1,88 @@
 import { useOKRStore } from '@/store/useOKRStore';
 import { OKRNodeItem } from './OKRNodeItem';
+import { useMemo, useState } from 'react';
+import { FilterBar, FilterState } from './FilterBar';
+import { OKRNode } from '@/types';
 
 export function OKRListView() {
-    const { nodes, focusedNodeId, setFocusedNodeId } = useOKRStore();
+    const { nodes: okrNodes, focusedNodeId, setFocusedNodeId } = useOKRStore();
+    const [filters, setFilters] = useState<FilterState>({
+        search: '',
+        teamId: '',
+        ownerId: '',
+        goalId: '',
+        objectiveId: '',
+        keyResultId: ''
+    });
 
-    // Filter nodes based on focus mode
+    // Apply Filters (Match + Ancestors)
+    const filteredNodes = useMemo(() => {
+        const hasActiveFilters = filters.search || filters.teamId || filters.ownerId;
+        if (!hasActiveFilters) return okrNodes;
+
+        // Find initial matches
+        const matches = okrNodes.filter(node => {
+            const matchesSearch = !filters.search || (
+                (node.title?.toLowerCase().includes(filters.search.toLowerCase())) ||
+                (node.description?.toLowerCase().includes(filters.search.toLowerCase()))
+            );
+            const matchesTeam = !filters.teamId || node.teamId === filters.teamId;
+            const matchesOwner = !filters.ownerId || node.owner === filters.ownerId;
+
+            return matchesSearch && matchesTeam && matchesOwner;
+        });
+
+        // Collect matches AND their ancestors to preserve tree structure
+        const resultIds = new Set<string>();
+        matches.forEach(match => {
+            let current: OKRNode | undefined = match;
+            while (current) {
+                resultIds.add(current.id);
+                if (current.parentId) {
+                    current = okrNodes.find(n => n.id === current!.parentId);
+                } else {
+                    current = undefined;
+                }
+            }
+        });
+
+        return okrNodes.filter(n => resultIds.has(n.id));
+    }, [okrNodes, filters]);
+
+    // Filter root nodes from the filtered set
     const rootNodes = focusedNodeId
-        ? nodes.filter(n => n.id === focusedNodeId)
-        : nodes.filter(n => n.parentId === null);
+        ? filteredNodes.filter(n => n.id === focusedNodeId)
+        : filteredNodes.filter(n => n.parentId === null);
 
     return (
         <div className="flex flex-col gap-4">
-            {focusedNodeId && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-4 py-2 rounded-md flex items-center justify-between">
-                    <span className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            <div className="flex justify-between items-start">
+                <FilterBar
+                    filters={filters}
+                    onFilterChange={setFilters}
+                    nodes={okrNodes}
+                    showCascadingFilters={false}
+                    className="mb-0"
+                />
+
+                {focusedNodeId && (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-4 py-2 rounded-md flex items-center justify-between ml-auto">
+                        <span className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2 mr-4">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                            </span>
+                            Focus Mode Active
                         </span>
-                        Focus Mode Active
-                    </span>
-                    <button
-                        onClick={() => setFocusedNodeId(null)}
-                        className="text-xs font-medium text-blue-700 dark:text-blue-300 hover:underline"
-                    >
-                        Clear Focus
-                    </button>
-                </div>
-            )}
+                        <button
+                            onClick={() => setFocusedNodeId(null)}
+                            className="text-xs font-medium text-blue-700 dark:text-blue-300 hover:underline"
+                        >
+                            Clear Focus
+                        </button>
+                    </div>
+                )}
+            </div>
 
             <div className="flex items-center justify-between pb-4 border-b border-border">
                 <div className="text-sm text-muted-foreground font-medium pl-2">Name</div>
@@ -36,11 +91,11 @@ export function OKRListView() {
             <div className="flex flex-col bg-card rounded-lg border border-border shadow-sm">
                 {rootNodes.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
-                        {focusedNodeId ? "Focused node not found." : "No OKRs found. Create one to get started."}
+                        {focusedNodeId ? "Focused node not found in current filters." : "No OKRs found matching your criteria."}
                     </div>
                 ) : (
                     rootNodes.map(node => (
-                        <OKRNodeItem key={node.id} node={node} level={0} />
+                        <OKRNodeItem key={node.id} node={node} level={0} nodes={filteredNodes} searchTerm={filters.search} />
                     ))
                 )}
             </div>

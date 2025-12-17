@@ -1,8 +1,8 @@
 import React from 'react';
-import { LayoutDashboard, Target, CheckSquare, Library, Users, Activity, Shield, Settings, BookOpen, Sun, Moon, LogOut } from 'lucide-react';
+import { LayoutDashboard, Target, CheckSquare, Library, Users, Settings, Sun, Moon, LogOut, Calendar } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { useOKRStore } from '@/store/useOKRStore';
+// import { useOKRStore } from '@/store/useOKRStore';
 
 interface SidebarProps {
     currentView: string;
@@ -12,7 +12,7 @@ interface SidebarProps {
 export function Sidebar({ currentView, onChangeView }: SidebarProps) {
     const [isDark, setIsDark] = React.useState(true);
     // Simple single-org view
-    const { organizationId, nodes } = useOKRStore();
+    // const { organizationId, nodes } = useOKRStore();
 
     // We can try to fetch the org name from the store if we had it, 
     // or just show generic "My Organization" for now to keep it simple and robust.
@@ -37,10 +37,9 @@ export function Sidebar({ currentView, onChangeView }: SidebarProps) {
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'okrs', icon: Target, label: 'OKRs' },
         { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
+        { id: 'scheduling', icon: Calendar, label: 'Scheduling' },
         { id: 'library', icon: Library, label: 'Library' },
         { id: 'organization', icon: Users, label: 'Organization' },
-        { id: 'monitoring', icon: Activity, label: 'Monitoring' },
-        { id: 'sysadmin', icon: Shield, label: 'SYSADMIN' },
     ];
 
     return (

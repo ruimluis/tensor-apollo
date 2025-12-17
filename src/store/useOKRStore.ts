@@ -13,6 +13,7 @@ interface OKRState {
     updateNode: (id: string, updates: Partial<OKRNode>) => Promise<void>;
     deleteNode: (id: string) => Promise<void>;
     addCheckIn: (nodeId: string, update: { value: number | null, progress: number, comment: string, date: string, checklist?: any[] }) => Promise<void>;
+    updateTaskDependencies: (taskId: string, dependencyIds: string[]) => Promise<void>;
     toggleExpand: (id: string) => Promise<void>;
     focusedNodeId: string | null;
     setFocusedNodeId: (id: string | null) => void;
@@ -109,6 +110,23 @@ export const useOKRStore = create<OKRState>((set, get) => ({
                     console.warn("Could not fetch read status", e);
                 }
 
+                // 4c. Fetch Dependencies
+                let depMap = new Map<string, string[]>();
+                try {
+                    const { data: depData, error: depError } = await supabase
+                        .from('task_dependencies')
+                        .select('task_id, dependency_id');
+
+                    if (!depError && depData) {
+                        depData.forEach((row: any) => {
+                            const current = depMap.get(row.task_id) || [];
+                            depMap.set(row.task_id, [...current, row.dependency_id]);
+                        });
+                    }
+                } catch (e) {
+                    console.warn("Could not fetch dependencies", e);
+                }
+
                 const mappedNodes: OKRNode[] = (data || []).map((row: any) => {
                     const lastCommentTime = row.last_comment_at ? new Date(row.last_comment_at).getTime() : 0;
                     const lastReadTime = readMap.get(row.id) || 0;
@@ -141,7 +159,9 @@ export const useOKRStore = create<OKRState>((set, get) => ({
                         unread: isUnread,
                         createdAt: row.created_at,
                         updatedAt: row.updated_at,
-                        expanded: row.expanded
+                        expanded: row.expanded,
+                        estimatedHours: row.estimated_hours,
+                        dependencies: depMap.get(row.id) || []
                     };
                 });
 
@@ -188,7 +208,8 @@ export const useOKRStore = create<OKRState>((set, get) => ({
                     metric_unit: node.metricUnit || null,
                     metric_asc: node.metricAsc !== undefined ? node.metricAsc : true,
                     checklist: node.checklist || null,
-                    expanded: true
+                    expanded: true,
+                    estimated_hours: node.estimatedHours || null
                 }])
                 .select()
                 .single();
@@ -216,7 +237,8 @@ export const useOKRStore = create<OKRState>((set, get) => ({
                 checklist: data.checklist,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at,
-                expanded: data.expanded
+                expanded: data.expanded,
+                estimatedHours: data.estimated_hours
             };
 
             set((state) => ({ nodes: [...state.nodes, newNode] }));
@@ -248,6 +270,7 @@ export const useOKRStore = create<OKRState>((set, get) => ({
             if (updates.teamId !== undefined) dbUpdates.team_id = updates.teamId || null;
             if (updates.owner !== undefined) dbUpdates.user_id = updates.owner || null;
             if (updates.expanded !== undefined) dbUpdates.expanded = updates.expanded;
+            if (updates.estimatedHours !== undefined) dbUpdates.estimated_hours = updates.estimatedHours;
 
             const { error } = await supabase.from('okrs').update(dbUpdates).eq('id', id);
             if (error) throw error;
@@ -363,6 +386,31 @@ export const useOKRStore = create<OKRState>((set, get) => ({
                 nodes: rollupProgress(updatedNodes, nodeId)
             };
         });
+    },
+
+    updateTaskDependencies: async (taskId, dependencyIds) => {
+        // Optimistic Update
+        set((state) => ({
+            nodes: state.nodes.map((n) => (n.id === taskId ? { ...n, dependencies: dependencyIds } : n)),
+        }));
+
+        try {
+            // 1. Delete existing
+            await supabase.from('task_dependencies').delete().eq('task_id', taskId);
+
+            // 2. Insert new
+            if (dependencyIds.length > 0) {
+                const rows = dependencyIds.map(depId => ({
+                    task_id: taskId,
+                    dependency_id: depId
+                }));
+                const { error } = await supabase.from('task_dependencies').insert(rows);
+                if (error) throw error;
+            }
+        } catch (err: any) {
+            console.error("Error updating dependencies:", err);
+            // Revert on error? For now just log.
+        }
     },
 
     toggleExpand: async (id) => {

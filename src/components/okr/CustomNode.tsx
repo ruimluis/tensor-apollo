@@ -7,9 +7,11 @@ import { useOKRStore } from '@/store/useOKRStore';
 import { Drawer } from '@/components/ui/Drawer';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { CreateOKRForm } from '@/components/okr/CreateOKRForm';
+import { Tooltip } from '@/components/ui/Tooltip';
+import { HighlightText } from '@/components/ui/HighlightText';
 
 interface CustomNodeProps {
-    data: OKRNode;
+    data: OKRNode & { searchTerm?: string };
 }
 
 const CustomNode = ({ data }: CustomNodeProps) => {
@@ -39,31 +41,35 @@ const CustomNode = ({ data }: CustomNodeProps) => {
 
     return (
         // Remove overflow-hidden so dropdown can pop out
-        <div className="shadow-lg rounded-lg bg-card border border-border dark:border-white/20 w-[280px] group relative">
+        <div className="shadow-lg rounded-lg bg-card border border-border dark:border-white/20 w-[320px] group relative">
             <Handle type="target" position={Position.Left} className="!bg-muted-foreground" />
 
             {/* Rounded top corners manually since parent doesn't have overflow-hidden */}
             <div className={cn("px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white flex justify-between items-center rounded-t-lg", NODE_COLORS[data.type])}>
                 <span>{NODE_LABELS[data.type]}</span>
-                <span>{data.progress}%</span>
             </div>
 
             <div className="p-3">
-                <div className="flex justify-between items-start gap-2 mb-2">
-                    <div className="font-medium text-sm line-clamp-2" title={data.title}>
-                        {data.title}
+                <Tooltip content={
+                    <div className="space-y-1">
+                        <div className="font-bold">{data.title}</div>
+                        {data.description && <div className="text-xs text-muted-foreground/80">{data.description}</div>}
                     </div>
-                    {/* Unread Indicator */}
-                    {data.unread && (
-                        <div
-                            className="flex-shrink-0 text-red-500 animate-pulse cursor-pointer hover:scale-110 transition-transform mt-0.5"
-                            title="Unread comments"
-                            onClick={(e) => openEditModal('discussion', e)}
-                        >
-                            <MessageCircle className="h-4 w-4 fill-red-500/20" />
-                        </div>
-                    )}
-                </div>
+                }>
+                    <div className="font-bold text-sm truncate cursor-help">
+                        <HighlightText text={data.title} highlight={data.searchTerm || ''} />
+                    </div>
+                </Tooltip>
+                {/* Unread Indicator */}
+                {data.unread && (
+                    <div
+                        className="flex-shrink-0 text-red-500 animate-pulse cursor-pointer hover:scale-110 transition-transform mt-0.5"
+                        title="Unread comments"
+                        onClick={(e) => openEditModal('discussion', e)}
+                    >
+                        <MessageCircle className="h-4 w-4 fill-red-500/20" />
+                    </div>
+                )}
 
                 {/* Team & Owner Badges */}
                 {(data.type === 'OBJECTIVE' || data.type === 'KEY_RESULT' || data.type === 'TASK') && (
@@ -76,6 +82,12 @@ const CustomNode = ({ data }: CustomNodeProps) => {
                         {data.ownerName && (
                             <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                                 {data.ownerName}
+                            </span>
+                        )}
+                        {data.type === 'TASK' && data.estimatedHours && (
+                            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                                <Clock className="h-3 w-3" />
+                                {data.estimatedHours}h
                             </span>
                         )}
                     </div>
@@ -123,6 +135,7 @@ const CustomNode = ({ data }: CustomNodeProps) => {
                                 style={{ width: `${data.progress}%` }}
                             />
                         </div>
+                        <span className="text-xs font-medium text-muted-foreground w-[32px] text-right">{Math.round(data.progress)}%</span>
                     </div>
 
                     <div className="relative">
@@ -200,12 +213,6 @@ const CustomNode = ({ data }: CustomNodeProps) => {
                         <span>-</span>
                         <span>{data.endDate ? new Date(data.endDate).toLocaleDateString() : 'No end'}</span>
                     </div>
-                    {data.type === 'TASK' && data.estimatedHours && (
-                        <div className="flex items-center gap-1" title="Estimated Hours">
-                            <Clock className="h-3 w-3" />
-                            <span>{data.estimatedHours}h</span>
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -247,7 +254,7 @@ const CustomNode = ({ data }: CustomNodeProps) => {
                 description={`Are you sure you want to delete "${data.title}"? This action cannot be undone.`}
                 confirmLabel="Delete"
             />
-        </div>
+        </div >
     );
 };
 
