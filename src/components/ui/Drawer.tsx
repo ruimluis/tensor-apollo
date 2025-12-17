@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMountTransition } from '@/hooks/useMountTransition';
 
 interface DrawerProps {
     isOpen: boolean;
@@ -11,6 +13,7 @@ interface DrawerProps {
 }
 
 export function Drawer({ isOpen, onClose, title, children, width = "max-w-md" }: DrawerProps) {
+    const hasTransitionedIn = useMountTransition(isOpen, 300); // 300ms matches animation duration
     const overlayRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -29,31 +32,27 @@ export function Drawer({ isOpen, onClose, title, children, width = "max-w-md" }:
         };
     }, [isOpen, onClose]);
 
-    // Mount/Unmount logic for animation could be handled by a library, 
-    // but for simplicity we render always and toggle classes, 
-    // OR return null if not open.
-    // To have a slide-out animation on close, we'd need more complex state.
-    // For now, we'll do conditional rendering with CSS animation for "in" state.
-    // To support "out" animation, we'd need `AnimatePresence` or similar logic.
-    // We'll stick to simple "render if open" for now, maybe with a basic CSS transition if mounted.
+    if (!hasTransitionedIn && !isOpen) return null;
 
-    // A common pattern without Framer Motion is to keep it mounted but hidden, or use a Transition wrapper.
-    // Let's use a simple approach: Render if isOpen, use CSS animation for slide-in.
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 z-50 flex justify-end">
+    return createPortal(
+        <div className={cn(
+            "fixed inset-0 z-[100] flex justify-end transition-opacity duration-300",
+            isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}>
             {/* Overlay */}
             <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+                className={cn(
+                    "absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300",
+                    isOpen ? "opacity-100" : "opacity-0"
+                )}
                 onClick={onClose}
             />
 
             {/* Drawer Panel */}
             <div
                 className={cn(
-                    "relative h-full w-full bg-background p-6 shadow-xl border-l border-border transition-transform animate-in slide-in-from-right duration-300 sm:w-3/4 md:w-1/2 lg:w-1/3",
+                    "relative h-full w-full bg-background p-6 shadow-xl border-l border-border transition-transform duration-300 sm:w-3/4 md:w-1/2 lg:w-1/3",
+                    isOpen ? "translate-x-0" : "translate-x-full",
                     width
                 )}
                 role="dialog"
@@ -73,6 +72,7 @@ export function Drawer({ isOpen, onClose, title, children, width = "max-w-md" }:
                     {children}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

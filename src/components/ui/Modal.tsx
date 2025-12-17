@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-
 
 interface ModalProps {
     isOpen: boolean;
@@ -30,8 +30,8 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
             <div
                 ref={overlayRef}
                 className="relative w-full max-w-lg transform rounded-lg bg-card p-6 shadow-xl transition-all border border-border"
@@ -50,6 +50,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 
                 {children}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

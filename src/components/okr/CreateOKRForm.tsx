@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { OKRType, OKRNode } from '@/types';
 import { useOKRStore } from '@/store/useOKRStore';
 import { supabase } from '@/lib/supabase';
-import { Loader2, CheckSquare } from 'lucide-react';
+import { X, Calendar, User, Users, ChevronRight, CheckCircle2, AlertCircle, PlusCircle, MessageCircle, Send, Clock, Loader2, CheckSquare } from 'lucide-react';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 
 interface CreateOKRModalProps {
@@ -55,6 +56,7 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
         metricUnit: initialData?.metricUnit || '',
         metricAsc: initialData?.metricAsc !== undefined ? initialData.metricAsc : true,
         checklist: initialData?.checklist || [] as { text: string; checked: boolean }[],
+        estimatedHours: initialData?.estimatedHours || undefined,
     });
 
     // Fetch Teams and Parent Data
@@ -150,6 +152,7 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
                 metricUnit: initialData?.metricUnit || '',
                 metricAsc: initialData?.metricAsc !== undefined ? initialData.metricAsc : true,
                 checklist: initialData?.checklist || [],
+                estimatedHours: initialData?.estimatedHours || undefined,
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -197,34 +200,34 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
         <div className="flex flex-col h-full">
             {/* Tabs Header - Only show if editing an existing node */}
             {isEditing && (
-                <div className="flex border-b border-border mb-4">
+                <div className="flex items-center gap-6 border-b border-border mb-6 px-1">
                     <button
                         type="button"
                         onClick={() => setActiveTab('details')}
-                        className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'details'
+                        className={`py-2 text-sm font-medium border-b-2 transition-colors hover:text-foreground ${activeTab === 'details'
                             ? 'border-primary text-primary'
-                            : 'border-transparent text-muted-foreground hover:text-foreground'
-                            }`}
+                            : 'border-transparent text-muted-foreground'
+                            } `}
                     >
                         Details
                     </button>
                     <button
                         type="button"
                         onClick={() => setActiveTab('progress')}
-                        className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'progress'
+                        className={`py-2 text-sm font-medium border-b-2 transition-colors hover:text-foreground ${activeTab === 'progress'
                             ? 'border-primary text-primary'
-                            : 'border-transparent text-muted-foreground hover:text-foreground'
-                            }`}
+                            : 'border-transparent text-muted-foreground'
+                            } `}
                     >
                         Update Progress
                     </button>
                     <button
                         type="button"
                         onClick={() => setActiveTab('discussion')}
-                        className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'discussion'
+                        className={`py-2 text-sm font-medium border-b-2 transition-colors hover:text-foreground ${activeTab === 'discussion'
                             ? 'border-primary text-primary'
-                            : 'border-transparent text-muted-foreground hover:text-foreground'
-                            }`}
+                            : 'border-transparent text-muted-foreground'
+                            } `}
                     >
                         Discussion
                     </button>
@@ -485,16 +488,40 @@ export function CreateOKRForm({ isOpen, onClose, initialData, parentType, defaul
                                 <label className="block text-sm font-medium text-foreground mb-1">
                                     End Date
                                 </label>
-                                <input
-                                    type="date"
-                                    value={formData.endDate}
-                                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                                    min={formData.startDate || parentDates?.start}
-                                    max={parentDates?.end}
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        value={formData.endDate}
+                                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                                        className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                        min={formData.startDate || parentDates?.start}
+                                        max={parentDates?.end}
+                                    />
+                                    <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                </div>
                             </div>
                         </div>
+
+                        {/* Estimated Hours - Only for TASK */}
+                        {formData.type === 'TASK' && (
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1">
+                                    Estimated Hours
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.5"
+                                        placeholder="e.g. 4"
+                                        value={formData.estimatedHours || ''}
+                                        onChange={(e) => setFormData({ ...formData, estimatedHours: e.target.value ? Number(e.target.value) : undefined })}
+                                        className="w-full pl-9 pr-3 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                    />
+                                    <Clock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                </div>
+                            </div>
+                        )}
 
                         <div className="flex justify-end gap-3 pt-4">
                             <button
@@ -571,7 +598,7 @@ function CheckInForm({ node, onClose }: { node: OKRNode, onClose: () => void }) 
             onClose();
         } catch (error: any) {
             console.error("Check-in failed:", error);
-            alert(`Failed to add check-in: ${error.message || error.details || 'Unknown error'}`);
+            alert(`Failed to add check -in: ${error.message || error.details || 'Unknown error'} `);
         } finally {
             setLoading(false);
         }
@@ -604,20 +631,20 @@ function CheckInForm({ node, onClose }: { node: OKRNode, onClose: () => void }) 
                                 <button
                                     type="button"
                                     onClick={() => setCheckIn({ ...checkIn, progress: 0, value: 0 })}
-                                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium border transition-colors ${checkIn.progress === 0
+                                    className={`flex - 1 py - 2 px - 4 rounded - md text - sm font - medium border transition - colors ${checkIn.progress === 0
                                         ? 'bg-muted text-foreground border-primary'
                                         : 'bg-transparent border-border hover:bg-muted/50'
-                                        }`}
+                                        } `}
                                 >
                                     Not Done
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setCheckIn({ ...checkIn, progress: 100, value: 1 })}
-                                    className={`flex-1 py-2 px-4 rounded-md text-sm font-medium border transition-colors ${checkIn.progress === 100
+                                    className={`flex - 1 py - 2 px - 4 rounded - md text - sm font - medium border transition - colors ${checkIn.progress === 100
                                         ? 'bg-green-100 text-green-700 border-green-500 dark:bg-green-900/30 dark:text-green-400'
                                         : 'bg-transparent border-border hover:bg-muted/50'
-                                        }`}
+                                        } `}
                                 >
                                     Done
                                 </button>
@@ -704,10 +731,10 @@ function CheckInForm({ node, onClose }: { node: OKRNode, onClose: () => void }) 
                                                 });
                                             }}
                                         >
-                                            <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${item.checked ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground'}`}>
+                                            <div className={`mt - 0.5 flex h - 4 w - 4 shrink - 0 items - center justify - center rounded - sm border ${item.checked ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground'} `}>
                                                 {item.checked && <CheckSquare className="h-3 w-3" />}
                                             </div>
-                                            <span className={`text-sm ${item.checked ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{item.text}</span>
+                                            <span className={`text - sm ${item.checked ? 'text-muted-foreground line-through' : 'text-foreground'} `}>{item.text}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -724,7 +751,7 @@ function CheckInForm({ node, onClose }: { node: OKRNode, onClose: () => void }) 
                         <div>
                             <label className="block text-xs font-medium text-muted-foreground mb-1">Calculated Progress</label>
                             <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-                                <div className="bg-primary h-full transition-all" style={{ width: `${checkIn.progress}%` }}></div>
+                                <div className="bg-primary h-full transition-all" style={{ width: `${checkIn.progress}% ` }}></div>
                             </div>
                             <div className="text-right text-xs text-muted-foreground mt-1">{Math.round(checkIn.progress)}%</div>
                         </div>
@@ -851,7 +878,7 @@ function DiscussionTab({ nodeId }: { nodeId: string }) {
         // Subscribe to real-time additions
         const channel = supabase
             .channel('okr_comments')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'okr_comments', filter: `okr_id=eq.${nodeId}` },
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'okr_comments', filter: `okr_id = eq.${nodeId} ` },
                 () => {
                     fetchComments(); // Refetch to get profile data joined
                     markAsRead(); // Mark as read if we are looking at it
@@ -891,7 +918,7 @@ function DiscussionTab({ nodeId }: { nodeId: string }) {
         if (mentionIndex === -1) return;
         const start = newComment.slice(0, mentionIndex);
         const end = newComment.slice(mentionIndex + mentionQuery.length + 1);
-        setNewComment(`${start}@${userName.replace(/\s/g, '')} ${end}`);
+        setNewComment(`${start} @${userName.replace(/\s/g, '')} ${end} `);
         setMentionIndex(-1);
         textareaRef.current?.focus();
     };

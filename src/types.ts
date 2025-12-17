@@ -27,6 +27,9 @@ export interface OKRNode {
     lastCheckinDate?: string;
     lastCommentAt?: string;
     unread?: boolean;
+    estimatedHours?: number;
+    // Runtime props
+    onFocus?: (id: string) => void;
     createdAt: string;
     updatedAt: string;
 }
