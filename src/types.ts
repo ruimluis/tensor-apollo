@@ -9,11 +9,37 @@ export interface OKRNode {
     status: 'pending' | 'in-progress' | 'completed';
     progress: number;
     owner: string;
+    ownerName?: string;
     organizationId: string; // New field
+    teamId?: string;
+    teamName?: string;
     children?: OKRNode[];
     expanded?: boolean;
+    startDate?: string;
+    endDate?: string;
+    metricType?: 'boolean' | 'percentage' | 'value' | 'checklist';
+    metricStart?: number;
+    metricTarget?: number;
+    metricUnit?: string;
+    metricAsc?: boolean;
+    checklist?: { text: string; checked: boolean }[];
+    currentValue?: number;
+    lastCheckinDate?: string;
+    lastCommentAt?: string;
+    unread?: boolean;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface OKRUpdate {
+    id: string;
+    okrId: string;
+    userId: string; // ID of user who made update
+    progressValue: number; // % progress or 0-1 for boolean
+    currentValue?: number; // Raw value (e.g. $ amount)
+    comment?: string;
+    checkinDate: string;
+    createdAt: string;
 }
 
 export interface Organization {

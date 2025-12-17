@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useOKRStore } from '@/store/useOKRStore';
 import { useToast } from '@/components/ui/Toast';
 import { TeamCard, Team } from './TeamCard';
-import { Modal } from '@/components/ui/Modal';
+import { Drawer } from '@/components/ui/Drawer';
 import { Plus, Loader2, Search, X, Check, Globe } from 'lucide-react';
 
 interface TeamsListProps {
@@ -212,7 +212,7 @@ export function TeamsList({ isAdmin, currentUserId }: TeamsListProps) {
             )}
 
             {/* Create Modal */}
-            <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Team">
+            <Drawer isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Team">
                 <form onSubmit={handleCreate} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium mb-1">Team Name</label>
@@ -229,10 +229,10 @@ export function TeamsList({ isAdmin, currentUserId }: TeamsListProps) {
                         </button>
                     </div>
                 </form>
-            </Modal>
+            </Drawer>
 
             {/* Edit / Manage Modal */}
-            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Manage Team">
+            <Drawer isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Manage Team" width="max-w-xl">
                 <div className="space-y-6">
                     {/* Details Form */}
                     <form onSubmit={handleUpdate} className="space-y-4 border-b border-border pb-6">
@@ -269,7 +269,7 @@ export function TeamsList({ isAdmin, currentUserId }: TeamsListProps) {
                             />
                         </div>
 
-                        <div className="max-h-[200px] overflow-y-auto space-y-1 pr-1">
+                        <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1">
                             {availableMembers
                                 .filter(m => m.full_name?.toLowerCase().includes(memberSearch.toLowerCase()))
                                 .map(member => (
@@ -283,8 +283,8 @@ export function TeamsList({ isAdmin, currentUserId }: TeamsListProps) {
                                         <button
                                             onClick={() => toggleMember(member.user_id, !member.isInTeam)}
                                             className={`h-7 w-7 flex items-center justify-center rounded-full border transition-all ${member.isInTeam
-                                                    ? 'bg-primary border-primary text-primary-foreground hover:bg-primary/90'
-                                                    : 'border-border text-muted-foreground hover:border-primary hover:text-primary'
+                                                ? 'bg-primary border-primary text-primary-foreground hover:bg-primary/90'
+                                                : 'border-border text-muted-foreground hover:border-primary hover:text-primary'
                                                 }`}
                                         >
                                             {member.isInTeam ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
@@ -295,7 +295,7 @@ export function TeamsList({ isAdmin, currentUserId }: TeamsListProps) {
                         </div>
                     </div>
                 </div>
-            </Modal>
+            </Drawer>
         </div>
     );
 }

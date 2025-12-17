@@ -5,7 +5,7 @@ import { OKRGraphView } from '@/components/okr/OKRGraphView';
 import { cn } from '@/lib/utils';
 import { AuthProvider, useAuth } from '@/context/AuthProvider';
 import { useOKRStore } from '@/store/useOKRStore';
-import { Modal } from '@/components/ui/Modal';
+import { Drawer } from '@/components/ui/Drawer';
 import { CreateOKRForm } from '@/components/okr/CreateOKRForm';
 import { OrganizationPage } from '@/components/organization/OrganizationPage';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -59,7 +59,7 @@ function AppContent() {
                             <OKRGraphView />
                         )}
 
-                        <Modal
+                        <Drawer
                             isOpen={isCreateModalOpen}
                             onClose={() => setIsCreateModalOpen(false)}
                             title="Create New Goal"
@@ -69,7 +69,7 @@ function AppContent() {
                                 onClose={() => setIsCreateModalOpen(false)}
                                 defaultType="GOAL"
                             />
-                        </Modal>
+                        </Drawer>
                     </div>
                 )}
 

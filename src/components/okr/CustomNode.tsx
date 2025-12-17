@@ -4,7 +4,7 @@ import { OKRNode, NODE_COLORS, NODE_LABELS } from '@/types';
 import { cn } from '@/lib/utils';
 import { MoreHorizontal, CornerDownRight, Edit2, Trash2 } from 'lucide-react';
 import { useOKRStore } from '@/store/useOKRStore';
-import { Modal } from '@/components/ui/Modal';
+import { Drawer } from '@/components/ui/Drawer';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { CreateOKRForm } from '@/components/okr/CreateOKRForm';
 
@@ -91,12 +91,21 @@ const CustomNode = ({ data }: CustomNodeProps) => {
                         )}
                     </div>
                 </div>
+
+                {/* Footer Metadata */}
+                <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground">
+                    <div className="flex gap-2">
+                        <span>{data.startDate ? new Date(data.startDate).toLocaleDateString() : 'No start date'}</span>
+                        <span>-</span>
+                        <span>{data.endDate ? new Date(data.endDate).toLocaleDateString() : 'No end date'}</span>
+                    </div>
+                </div>
             </div>
 
             <Handle type="source" position={Position.Right} className="!bg-muted-foreground" />
 
             {/* Modals */}
-            <Modal
+            <Drawer
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
                 title={`Add child to "${data.title}"`}
@@ -107,9 +116,9 @@ const CustomNode = ({ data }: CustomNodeProps) => {
                     parentType={data.type}
                     initialData={{ parentId: data.id }}
                 />
-            </Modal>
+            </Drawer>
 
-            <Modal
+            <Drawer
                 isOpen={showEditModal}
                 onClose={() => setShowEditModal(false)}
                 title={`Edit "${data.title}"`}
@@ -120,7 +129,7 @@ const CustomNode = ({ data }: CustomNodeProps) => {
                     initialData={data}
                     defaultType={data.type}
                 />
-            </Modal>
+            </Drawer>
 
             <ConfirmationModal
                 isOpen={showDeleteModal}

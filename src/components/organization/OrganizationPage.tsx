@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useOKRStore } from '@/store/useOKRStore';
 import { useToast } from '@/components/ui/Toast';
 import { Users, Mail, Copy, Check, Shield, Loader2, Plus, X, Pencil, MoreVertical, Trash2 } from 'lucide-react';
+import { Drawer } from '@/components/ui/Drawer';
 import { Modal } from '@/components/ui/Modal';
 import { TeamsList } from './TeamsList';
 
@@ -405,7 +406,7 @@ export function OrganizationPage() {
             )}
 
             {/* Invite Modal */}
-            <Modal isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} title="Invite Member">
+            <Drawer isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} title="Invite Member">
                 {!generatedLink ? (
                     <form onSubmit={handleInvite} className="space-y-4">
                         <div className="grid gap-4">
@@ -483,10 +484,10 @@ export function OrganizationPage() {
                         </div>
                     </div>
                 )}
-            </Modal>
+            </Drawer>
 
             {/* Org Name Modal */}
-            <Modal isOpen={showOrgNameModal} onClose={() => setShowOrgNameModal(false)} title="Organization Settings">
+            <Drawer isOpen={showOrgNameModal} onClose={() => setShowOrgNameModal(false)} title="Organization Settings">
                 <form onSubmit={handleUpdateOrgName} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium mb-1">Organization Name</label>
@@ -512,7 +513,7 @@ export function OrganizationPage() {
                         </button>
                     </div>
                 </form>
-            </Modal>
+            </Drawer>
 
 
 
