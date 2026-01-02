@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Filter, X, Search, Users, User, Target, Crosshair, ListChecks } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Filter, X, Search, User, Target, Crosshair, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OKRNode } from '@/types';
 
@@ -36,7 +36,7 @@ export function FilterBar({ filters, onFilterChange, nodes, className, showCasca
     // --- Derived Options Logic ---
 
     // 1. Teams & Owners (Always derived from all nodes? Or filtered? Let's use all to make them discoverable)
-    const { teams, owners } = useMemo(() => {
+    const { owners } = useMemo(() => {
         if (!nodes) return { teams: [], owners: [] }; // Safety check
 
         const uniqueTeams = new Map<string, string>();
@@ -48,7 +48,6 @@ export function FilterBar({ filters, onFilterChange, nodes, className, showCasca
         });
 
         return {
-            teams: Array.from(uniqueTeams.entries()).map(([id, name]) => ({ id, name })),
             owners: Array.from(uniqueOwners.entries()).map(([id, name]) => ({ id, name }))
         };
     }, [nodes]);

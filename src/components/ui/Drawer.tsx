@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,6 @@ interface DrawerProps {
 
 export function Drawer({ isOpen, onClose, title, children, width = "max-w-md" }: DrawerProps) {
     const hasTransitionedIn = useMountTransition(isOpen, 300); // 300ms matches animation duration
-    const overlayRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {

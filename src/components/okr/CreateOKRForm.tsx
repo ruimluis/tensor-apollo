@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { OKRType, OKRNode } from '@/types';
 import { useOKRStore } from '@/store/useOKRStore';
 import { supabase } from '@/lib/supabase';
-import { Calendar, Clock, Loader2, CheckSquare, Sparkles, AlertTriangle, RefreshCw, Zap, Printer, History, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, Loader2, CheckSquare, Sparkles, AlertTriangle, RefreshCw, Zap, Printer, ChevronRight } from 'lucide-react';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { cn } from '@/lib/utils';
 
@@ -1360,7 +1360,6 @@ function AITab({ node, allNodes, teamMemberCount }: { node: OKRNode, allNodes: O
     // Risk History
     const [riskHistory, setRiskHistory] = useState<any[]>([]);
     const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
-    const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
     // Risk Analysis State
 
@@ -1377,7 +1376,6 @@ function AITab({ node, allNodes, teamMemberCount }: { node: OKRNode, allNodes: O
     // Fetch History Effect
     useEffect(() => {
         const fetchHistory = async () => {
-            setIsHistoryLoading(true);
             const { data } = await supabase
                 .from('okr_risk_assessments')
                 .select('*')
@@ -1385,7 +1383,6 @@ function AITab({ node, allNodes, teamMemberCount }: { node: OKRNode, allNodes: O
                 .order('created_at', { ascending: false });
 
             if (data) setRiskHistory(data);
-            setIsHistoryLoading(false);
         };
         fetchHistory();
     }, [node.id]);

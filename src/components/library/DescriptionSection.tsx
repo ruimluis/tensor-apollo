@@ -1,7 +1,5 @@
 import { Wand2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import { useToast } from '@/components/ui/Toast';
 
 interface DescriptionSectionProps {
     title: string;
@@ -26,7 +24,7 @@ export function DescriptionSection({
     isGenerating = false,
     isSaving = false
 }: DescriptionSectionProps) {
-    const { addToast } = useToast();
+
 
     return (
         <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">

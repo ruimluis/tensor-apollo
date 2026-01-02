@@ -1,6 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useOKRStore } from '@/store/useOKRStore';
-import { OKRNode } from '@/types';
 import { OKRNodeItem } from '@/components/okr/OKRNodeItem';
 import { FilterBar } from '@/components/okr/FilterBar';
 import { TaskCard } from './TaskCard';

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { OKRNode, NODE_COLORS, NODE_LABELS } from '@/types';
 import { useOKRStore } from '@/store/useOKRStore';
 import { cn } from '@/lib/utils';
-import { Clock, Calendar, MoreHorizontal, Edit2, Trash2, CheckCircle2, MessageCircle, AlertCircle, CheckSquare } from 'lucide-react';
+import { Clock, Calendar, MoreHorizontal, Edit2, Trash2, CheckCircle2, MessageCircle, CheckSquare } from 'lucide-react';
 import { Drawer } from '@/components/ui/Drawer';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { CreateOKRForm } from '@/components/okr/CreateOKRForm';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Modal } from './Modal';
 import { AlertTriangle } from 'lucide-react';
 
@@ -20,8 +19,7 @@ export function ConfirmationModal({
     title,
     description,
     confirmLabel = 'Confirm',
-    cancelLabel = 'Cancel',
-    variant = 'danger'
+    cancelLabel = 'Cancel'
 }: ConfirmationModalProps) {
 
     return (

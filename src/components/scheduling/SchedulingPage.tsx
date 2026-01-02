@@ -328,7 +328,7 @@ export function SchedulingPage() {
         }
     }, [viewMode]);
 
-    const { startDate, endDate, days } = useMemo(() => {
+    const { days } = useMemo(() => {
         const start = startOfWeek(viewDate);
         let end;
         switch (viewMode) {

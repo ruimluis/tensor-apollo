@@ -1,4 +1,3 @@
-import React from 'react';
 import { Calendar as CalendarIcon, Sparkles, ChevronRight, ChevronLeft } from 'lucide-react';
 import { format } from 'date-fns';
 

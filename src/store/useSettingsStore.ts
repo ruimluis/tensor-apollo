@@ -55,7 +55,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
         if (error && error.code === 'PGRST116') {
             // Not found, create default
-            const { data: newData, error: createError } = await supabase
+            const { data: newData } = await supabase
                 .from('user_capacity_settings')
                 .insert([{ user_id: user.id }])
                 .select()
@@ -74,7 +74,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     },
 
     fetchAllSettings: async () => {
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('user_capacity_settings')
             .select('*');
 

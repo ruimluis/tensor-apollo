@@ -4,14 +4,14 @@ import { useOKRStore } from '@/store/useOKRStore';
 import { useToast } from '@/components/ui/Toast';
 import { TeamCard, Team } from './TeamCard';
 import { Drawer } from '@/components/ui/Drawer';
-import { Plus, Loader2, Search, X, Check, Globe } from 'lucide-react';
+import { Plus, Loader2, Search, Check, Globe } from 'lucide-react';
 
 interface TeamsListProps {
     isAdmin: boolean;
     currentUserId: string | null;
 }
 
-export function TeamsList({ isAdmin, currentUserId }: TeamsListProps) {
+export function TeamsList({ isAdmin }: TeamsListProps) {
     const { organizationId } = useOKRStore();
     const { addToast } = useToast();
     const [teams, setTeams] = useState<Team[]>([]);
@@ -28,7 +28,7 @@ export function TeamsList({ isAdmin, currentUserId }: TeamsListProps) {
     const [formLoading, setFormLoading] = useState(false);
 
     // Member Management State
-    const [teamMembers, setTeamMembers] = useState<any[]>([]); // Members of selected team
+
     const [availableMembers, setAvailableMembers] = useState<any[]>([]); // All org members
     const [memberSearch, setMemberSearch] = useState('');
 
@@ -77,7 +77,7 @@ export function TeamsList({ isAdmin, currentUserId }: TeamsListProps) {
                 isInTeam: teamUserIds.includes(m.user_id)
             }));
             setAvailableMembers(mapped);
-            setTeamMembers(mapped.filter((m: any) => m.isInTeam));
+            setAvailableMembers(mapped);
         }
     };
 

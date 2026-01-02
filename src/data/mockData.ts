@@ -12,6 +12,8 @@ export const initialData: OKRNode[] = [
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         expanded: true,
+        owner: 'user_mock',
+        organizationId: 'org_mock',
     },
 
     // Objective 1
@@ -25,6 +27,8 @@ export const initialData: OKRNode[] = [
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         expanded: true,
+        owner: 'user_mock',
+        organizationId: 'org_mock',
     },
 
     // Key Result 1.1
@@ -38,6 +42,8 @@ export const initialData: OKRNode[] = [
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         expanded: true,
+        owner: 'user_mock',
+        organizationId: 'org_mock',
     },
 
     // Tasks for KR 1.1
@@ -50,6 +56,8 @@ export const initialData: OKRNode[] = [
         progress: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        owner: 'user_mock',
+        organizationId: 'org_mock',
     },
     {
         id: 't-2',
@@ -60,6 +68,8 @@ export const initialData: OKRNode[] = [
         progress: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        owner: 'user_mock',
+        organizationId: 'org_mock',
     },
 
     // Key Result 1.2
@@ -73,6 +83,8 @@ export const initialData: OKRNode[] = [
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         expanded: false,
+        owner: 'user_mock',
+        organizationId: 'org_mock',
     },
 
     // Objective 2
@@ -86,5 +98,7 @@ export const initialData: OKRNode[] = [
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         expanded: false,
+        owner: 'user_mock',
+        organizationId: 'org_mock',
     },
 ];
