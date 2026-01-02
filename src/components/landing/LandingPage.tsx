@@ -30,9 +30,10 @@ export function LandingPage({ onLoginClick }: LandingPageProps) {
                         <span className="font-bold text-xl tracking-tight">OKR Focus</span>
                     </div>
                     <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+                        <a href="#" className="hover:text-foreground transition-colors">Home</a>
                         <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-                        <a href="#solutions" className="hover:text-foreground transition-colors">Solutions</a>
                         <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
+                        <a href="https://substack.com/@ruiluis2/posts" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Blog</a>
                     </nav>
                     <div className="flex items-center gap-4">
                         <button
@@ -228,14 +229,14 @@ export function LandingPage({ onLoginClick }: LandingPageProps) {
                 </section>
 
                 {/* Main Feature Section */}
-                <section className="py-24 overflow-hidden bg-muted/20">
-                    <div className="container mx-auto px-4">
-                        <div className="flex flex-col lg:flex-row items-center gap-16">
+                <section id="features" className="py-24 overflow-hidden bg-muted/20">
+                    <div className="container mx-auto px-4 text-center">
+                        <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-base font-medium text-primary mb-12">
+                            <Sparkles className="h-5 w-5 mr-2" />
+                            Feature
+                        </div>
+                        <div className="flex flex-col lg:flex-row items-center gap-16 text-left">
                             <div className="flex-1">
-                                <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary mb-6">
-                                    <Sparkles className="h-4 w-4 mr-2" />
-                                    AI-Powered Intelligence
-                                </div>
                                 <h2 className="text-3xl lg:text-4xl font-bold tracking-tight mb-6">
                                     An AI Consultant That <span className="text-primary">Actually Works</span>
                                 </h2>
@@ -405,7 +406,7 @@ export function LandingPage({ onLoginClick }: LandingPageProps) {
                 </section>
 
                 {/* Features Grid */}
-                <section id="features" className="py-24 bg-background">
+                <section className="py-24 bg-background">
                     <div className="container mx-auto px-4">
                         <div className="text-center max-w-3xl mx-auto mb-16">
                             <h2 className="text-3xl lg:text-4xl font-bold tracking-tight mb-4 text-foreground">
@@ -507,7 +508,7 @@ export function LandingPage({ onLoginClick }: LandingPageProps) {
                 </section>
 
                 {/* Pricing Section */}
-                <section className="py-24 bg-background border-t border-border/50">
+                <section id="pricing" className="py-24 bg-background border-t border-border/50">
                     <div className="container mx-auto px-4">
                         <div className="text-center max-w-3xl mx-auto mb-16">
                             <h2 className="text-3xl lg:text-4xl font-bold tracking-tight mb-4">Pricing Plans</h2>
