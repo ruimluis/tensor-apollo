@@ -27,6 +27,12 @@ export interface OKRNode {
     lastCheckinDate?: string;
     lastCommentAt?: string;
     unread?: boolean;
+    // Risk Analysis Fields
+    risk_status?: 'On Track' | 'At Risk' | 'Off Track' | null;
+    risk_summary?: string | null;
+    risk_factors?: any[] | null;
+    risk_recommendations?: any[] | null;
+    risk_last_updated?: string | null;
     estimatedHours?: number;
     // Runtime props
     onFocus?: (id: string) => void;
@@ -50,6 +56,9 @@ export interface Organization {
     id: string;
     name: string;
     createdAt: string;
+    organizationDescription?: string;
+    productDescription?: string;
+    missionVision?: string;
 }
 
 export interface OrganizationMember {
@@ -57,6 +66,20 @@ export interface OrganizationMember {
     organizationId: string;
     userId: string;
     role: 'admin' | 'member';
+}
+
+export interface OrganizationDocument {
+    id: string;
+    organizationId: string;
+    uploadedBy: string;
+    name: string;
+    title?: string;
+    filePath: string;
+    size: number;
+    type: string;
+    createdAt: string;
+    summary?: string;
+    textContent?: string;
 }
 
 export const NODE_COLORS: Record<OKRType, string> = {

@@ -11,9 +11,14 @@ import { OrganizationPage } from '@/components/organization/OrganizationPage';
 import { ToastProvider } from '@/components/ui/Toast';
 import { TasksPage } from '@/components/tasks/TasksPage';
 import { SchedulingPage } from '@/components/scheduling/SchedulingPage';
+import { SettingsPage } from '@/components/settings/SettingsPage';
+import { DashboardPage } from '@/components/dashboard/DashboardPage';
+import { LibraryPage } from '@/components/library/LibraryPage';
+import { ChangelogPage } from '@/components/resources/ChangelogPage';
+import { SysAdminPage } from '@/components/sysadmin/SysAdminPage';
 
 function AppContent() {
-    const [currentView, setCurrentView] = useState('okrs');
+    const [currentView, setCurrentView] = useState('dashboard');
     const [okrViewMode, setOkrViewMode] = useState<'list' | 'graph'>('list');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const { fetchNodes } = useOKRStore();
@@ -28,6 +33,10 @@ function AppContent() {
     return (
         <AppLayout currentView={currentView} onChangeView={setCurrentView}>
             <div className="p-8">
+                {currentView === 'dashboard' && (
+                    <DashboardPage />
+                )}
+
                 {currentView === 'okrs' && (
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center justify-between mb-8">
@@ -87,7 +96,23 @@ function AppContent() {
                     <OrganizationPage />
                 )}
 
-                {currentView !== 'okrs' && currentView !== 'organization' && currentView !== 'tasks' && currentView !== 'scheduling' && (
+                {currentView === 'library' && (
+                    <LibraryPage />
+                )}
+
+                {currentView === 'settings' && (
+                    <SettingsPage />
+                )}
+
+                {currentView === 'changelog' && (
+                    <ChangelogPage />
+                )}
+
+                {currentView === 'sysadmin' && (
+                    <SysAdminPage />
+                )}
+
+                {currentView !== 'dashboard' && currentView !== 'okrs' && currentView !== 'organization' && currentView !== 'tasks' && currentView !== 'scheduling' && currentView !== 'settings' && currentView !== 'library' && currentView !== 'changelog' && currentView !== 'sysadmin' && (
                     <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground">
                         <h2 className="text-2xl font-semibold mb-2">Work in Progress</h2>
                         <p>The {currentView} view is under construction.</p>

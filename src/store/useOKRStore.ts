@@ -9,7 +9,7 @@ interface OKRState {
     organizationId: string | null;
 
     fetchNodes: () => Promise<void>;
-    addNode: (node: Partial<OKRNode>) => Promise<void>;
+    addNode: (node: Partial<OKRNode>) => Promise<OKRNode | undefined>;
     updateNode: (id: string, updates: Partial<OKRNode>) => Promise<void>;
     deleteNode: (id: string) => Promise<void>;
     addCheckIn: (nodeId: string, update: { value: number | null, progress: number, comment: string, date: string, checklist?: any[] }) => Promise<void>;
@@ -159,9 +159,14 @@ export const useOKRStore = create<OKRState>((set, get) => ({
                         unread: isUnread,
                         createdAt: row.created_at,
                         updatedAt: row.updated_at,
-                        expanded: row.expanded,
                         estimatedHours: row.estimated_hours,
-                        dependencies: depMap.get(row.id) || []
+                        dependencies: depMap.get(row.id) || [],
+                        // Risk Analysis Fields
+                        risk_status: row.risk_status,
+                        risk_summary: row.risk_summary,
+                        risk_factors: row.risk_factors,
+                        risk_recommendations: row.risk_recommendations,
+                        risk_last_updated: row.risk_last_updated
                     };
                 });
 
@@ -238,10 +243,17 @@ export const useOKRStore = create<OKRState>((set, get) => ({
                 createdAt: data.created_at,
                 updatedAt: data.updated_at,
                 expanded: data.expanded,
-                estimatedHours: data.estimated_hours
+                estimatedHours: data.estimated_hours,
+                dependencies: node.dependencies || [],
+                risk_status: data.risk_status,
+                risk_summary: data.risk_summary,
+                risk_factors: data.risk_factors,
+                risk_recommendations: data.risk_recommendations,
+                risk_last_updated: data.risk_last_updated
             };
 
             set((state) => ({ nodes: [...state.nodes, newNode] }));
+            return newNode;
         } catch (err: any) {
             alert(`Error: ${err.message}`);
         }
@@ -259,8 +271,8 @@ export const useOKRStore = create<OKRState>((set, get) => ({
             if (updates.parentId !== undefined) dbUpdates.parent_id = updates.parentId;
             if (updates.status !== undefined) dbUpdates.status = updates.status;
             if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
-            if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
-            if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
+            if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
+            if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate || null;
             if (updates.metricType !== undefined) dbUpdates.metric_type = updates.metricType;
             if (updates.metricStart !== undefined) dbUpdates.metric_start = updates.metricStart;
             if (updates.metricTarget !== undefined) dbUpdates.metric_target = updates.metricTarget;
@@ -271,22 +283,50 @@ export const useOKRStore = create<OKRState>((set, get) => ({
             if (updates.owner !== undefined) dbUpdates.user_id = updates.owner || null;
             if (updates.expanded !== undefined) dbUpdates.expanded = updates.expanded;
             if (updates.estimatedHours !== undefined) dbUpdates.estimated_hours = updates.estimatedHours;
+            // Risk Analysis Fields
+            if (updates.risk_status !== undefined) dbUpdates.risk_status = updates.risk_status;
+            if (updates.risk_summary !== undefined) dbUpdates.risk_summary = updates.risk_summary;
+            if (updates.risk_factors !== undefined) dbUpdates.risk_factors = updates.risk_factors;
+            if (updates.risk_recommendations !== undefined) dbUpdates.risk_recommendations = updates.risk_recommendations;
+            if (updates.risk_last_updated !== undefined) dbUpdates.risk_last_updated = updates.risk_last_updated;
 
             const { error } = await supabase.from('okrs').update(dbUpdates).eq('id', id);
             if (error) throw error;
         } catch (err: any) {
             console.error(err);
+            throw err;
         }
     },
 
     deleteNode: async (id) => {
+        // 1. Calculate all IDs to delete (Node + Descendants)
+        const state = get();
+        const getDescendantIds = (parentId: string, allNodes: OKRNode[]): string[] => {
+            const children = allNodes.filter(n => n.parentId === parentId);
+            let ids = children.map(c => c.id);
+            children.forEach(child => {
+                ids = [...ids, ...getDescendantIds(child.id, allNodes)];
+            });
+            return ids;
+        };
+
+        const descendantIds = getDescendantIds(id, state.nodes);
+        const idsToDelete = [id, ...descendantIds];
+
+        // 2. Optimistic Update
         set((state) => ({
-            nodes: state.nodes.filter((n) => n.id !== id),
+            nodes: state.nodes.filter((n) => !idsToDelete.includes(n.id)),
         }));
 
+        // 3. Persist to DB
         try {
-            const { error } = await supabase.from('okrs').delete().eq('id', id);
-            if (error) throw error;
+            const { error } = await supabase.from('okrs').delete().in('id', idsToDelete);
+            if (error) {
+                console.error("Supabase Delete Error:", error);
+                // Rollback? ideally yes, but for now just alert.
+                alert("Failed to delete from server. Please refresh.");
+                throw error;
+            }
         } catch (err: any) {
             console.error(err);
         }

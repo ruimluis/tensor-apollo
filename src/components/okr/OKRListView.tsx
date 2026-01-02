@@ -3,9 +3,12 @@ import { OKRNodeItem } from './OKRNodeItem';
 import { useMemo, useState } from 'react';
 import { FilterBar, FilterState } from './FilterBar';
 import { OKRNode } from '@/types';
+import { StrategyConsultantModal } from './StrategyConsultantModal';
+import { Sparkles } from 'lucide-react';
 
 export function OKRListView() {
     const { nodes: okrNodes, focusedNodeId, setFocusedNodeId } = useOKRStore();
+    const [isConsultantOpen, setIsConsultantOpen] = useState(false);
     const [filters, setFilters] = useState<FilterState>({
         search: '',
         teamId: '',
@@ -56,6 +59,26 @@ export function OKRListView() {
 
     return (
         <div className="flex flex-col gap-4">
+            <StrategyConsultantModal isOpen={isConsultantOpen} onClose={() => setIsConsultantOpen(false)} />
+
+            <div className="flex justify-between items-center bg-card p-4 rounded-lg border border-border shadow-sm">
+                <div className="flex items-center gap-4">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-sm">Need Strategic Clarity?</h3>
+                        <p className="text-xs text-muted-foreground">Use the AI Strategy Consultant to build a bespoke plan.</p>
+                    </div>
+                </div>
+                <button
+                    onClick={() => setIsConsultantOpen(true)}
+                    className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-sm transition-all flex items-center gap-2"
+                >
+                    <Sparkles className="w-4 h-4" /> Start Strategy Session
+                </button>
+            </div>
+
             <div className="flex justify-between items-start">
                 <FilterBar
                     filters={filters}

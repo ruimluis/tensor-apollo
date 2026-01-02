@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, MoreHorizontal, Trash2, Edit2, CornerDownRight, Crosshair, Minimize2, Hash, Percent, ListChecks, CheckCircle2, MessageCircle, TrendingUp, TrendingDown, PlayCircle, Target, Clock, AlertCircle } from 'lucide-react';
+import { ChevronRight, MoreHorizontal, Trash2, Edit2, CornerDownRight, Crosshair, Minimize2, Hash, Percent, ListChecks, CheckCircle2, MessageCircle, TrendingUp, TrendingDown, PlayCircle, Target, Clock, AlertCircle, AlertTriangle } from 'lucide-react';
 import { OKRNode, NODE_COLORS, NODE_LABELS } from '@/types';
 import { useOKRStore } from '@/store/useOKRStore';
 import { cn } from '@/lib/utils';
@@ -55,6 +55,10 @@ export function OKRNodeItem({ node, level, nodes: propNodes, searchTerm }: OKRNo
         setIsMenuOpen(false);
     };
 
+    if (node.type === 'OBJECTIVE' && node.risk_status) {
+        // console.log("Rendering Objective with Risk:", node.title, node.risk_status);
+    }
+
     return (
         <div className="flex flex-col select-none mb-2">
             <div
@@ -82,7 +86,10 @@ export function OKRNodeItem({ node, level, nodes: propNodes, searchTerm }: OKRNo
 
                 <div className="flex-1 min-w-0 mr-4">
                     <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm truncate">
+                        <span
+                            className="font-medium text-sm truncate cursor-pointer hover:underline hover:text-primary transition-colors"
+                            onClick={(e) => openEditModal('details', e)}
+                        >
                             <HighlightText text={node.title} highlight={searchTerm || ''} />
                         </span>
                     </div>
@@ -123,6 +130,22 @@ export function OKRNodeItem({ node, level, nodes: propNodes, searchTerm }: OKRNo
                                     <span className={cn("px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300", !node.ownerName && "text-muted-foreground bg-muted")}>
                                         {node.ownerName || 'Unassigned'}
                                     </span>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Risk Status Badge (Only for Objectives) */}
+                        {node.type === 'OBJECTIVE' && node.risk_status && (
+                            <>
+                                <div className="hidden sm:block w-px h-3 bg-border"></div>
+                                <div className={cn(
+                                    "flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+                                    node.risk_status === 'On Track' ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" :
+                                        node.risk_status === 'At Risk' ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" :
+                                            "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                                )}>
+                                    <AlertTriangle className="w-3 h-3" />
+                                    <span>{node.risk_status}</span>
                                 </div>
                             </>
                         )}

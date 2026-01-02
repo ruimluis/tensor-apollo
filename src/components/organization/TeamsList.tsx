@@ -151,6 +151,7 @@ export function TeamsList({ isAdmin, currentUserId }: TeamsListProps) {
             }
             // Refresh local state
             setAvailableMembers(prev => prev.map(m => m.user_id === userId ? { ...m, isInTeam: isAdding } : m));
+            fetchTeams();
         } catch (err: any) {
             addToast({ type: 'error', title: 'Error', message: err.message });
         }

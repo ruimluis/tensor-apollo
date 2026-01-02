@@ -1,7 +1,8 @@
-import React from 'react';
-import { LayoutDashboard, Target, CheckSquare, Library, Users, Settings, Sun, Moon, LogOut, Calendar } from 'lucide-react';
+import React, { useState } from 'react';
+import { LayoutDashboard, Target, CheckSquare, Library, Users, Settings, Sun, Moon, LogOut, Calendar, BookOpen, Shield, ChevronDown, ChevronRight, PlayCircle, Clock, Map } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthProvider';
 // import { useOKRStore } from '@/store/useOKRStore';
 
 interface SidebarProps {
@@ -11,6 +12,9 @@ interface SidebarProps {
 
 export function Sidebar({ currentView, onChangeView }: SidebarProps) {
     const [isDark, setIsDark] = React.useState(true);
+    const [isResourcesOpen, setIsResourcesOpen] = useState(false);
+    const { session } = useAuth();
+
     // Simple single-org view
     // const { organizationId, nodes } = useOKRStore();
 
@@ -33,6 +37,8 @@ export function Sidebar({ currentView, onChangeView }: SidebarProps) {
         window.location.reload();
     };
 
+    const isAdmin = session?.user?.email === 'ruimluis7@gmail.com';
+
     const menuItems = [
         { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { id: 'okrs', icon: Target, label: 'OKRs' },
@@ -40,6 +46,7 @@ export function Sidebar({ currentView, onChangeView }: SidebarProps) {
         { id: 'scheduling', icon: Calendar, label: 'Scheduling' },
         { id: 'library', icon: Library, label: 'Library' },
         { id: 'organization', icon: Users, label: 'Organization' },
+        { id: 'settings', icon: Settings, label: 'Settings' },
     ];
 
     return (
@@ -56,7 +63,7 @@ export function Sidebar({ currentView, onChangeView }: SidebarProps) {
                 </div>
             </div>
 
-            <nav className="flex-1 space-y-1 px-3 mt-4">
+            <nav className="flex-1 space-y-1 px-3 mt-4 overflow-y-auto">
                 {menuItems.map((item) => (
                     <button
                         key={item.id}
@@ -72,6 +79,80 @@ export function Sidebar({ currentView, onChangeView }: SidebarProps) {
                         {item.label}
                     </button>
                 ))}
+
+                {/* Resources Dropdown */}
+                <div>
+                    <button
+                        onClick={() => setIsResourcesOpen(!isResourcesOpen)}
+                        className={cn(
+                            "group flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
+                    >
+                        <div className="flex items-center">
+                            <BookOpen className="mr-3 h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-accent-foreground" />
+                            Resources
+                        </div>
+                        {isResourcesOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </button>
+
+                    {isResourcesOpen && (
+                        <div className="ml-4 mt-1 space-y-1 border-l border-border/50 pl-2">
+                            <button
+                                onClick={() => onChangeView('tutorials')}
+                                className={cn(
+                                    "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                                    currentView === 'tutorials'
+                                        ? "bg-primary/10 text-primary"
+                                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                )}
+                            >
+                                <PlayCircle className="mr-3 h-4 w-4" />
+                                Tutorials
+                            </button>
+                            <button
+                                onClick={() => onChangeView('changelog')}
+                                className={cn(
+                                    "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                                    currentView === 'changelog'
+                                        ? "bg-primary/10 text-primary"
+                                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                )}
+                            >
+                                <Clock className="mr-3 h-4 w-4" />
+                                Changelog
+                            </button>
+                            <button
+                                onClick={() => onChangeView('roadmap')}
+                                className={cn(
+                                    "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                                    currentView === 'roadmap'
+                                        ? "bg-primary/10 text-primary"
+                                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                )}
+                            >
+                                <Map className="mr-3 h-4 w-4" />
+                                Roadmap
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* SysAdmin Link - Only for specific user */}
+                {isAdmin && (
+                    <button
+                        onClick={() => onChangeView('sysadmin')}
+                        className={cn(
+                            "group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors mt-4",
+                            currentView === 'sysadmin'
+                                ? "bg-red-500/10 text-red-500"
+                                : "text-muted-foreground hover:bg-red-500/5 hover:text-red-500"
+                        )}
+                    >
+                        <Shield className="mr-3 h-5 w-5 flex-shrink-0" />
+                        SysAdmin
+                    </button>
+                )}
+
             </nav>
 
             <div className="p-4 border-t border-border space-y-2">
@@ -85,10 +166,7 @@ export function Sidebar({ currentView, onChangeView }: SidebarProps) {
                     </span>
                 </button>
 
-                <button className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground">
-                    <Settings className="mr-3 h-5 w-5" />
-                    Settings
-                </button>
+
                 <button
                     onClick={handleLogout}
                     className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700"

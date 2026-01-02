@@ -39,12 +39,14 @@ export function ConfirmationModal({
                 </div>
 
                 <div className="flex justify-end gap-3 mt-4">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-md transition-colors"
-                    >
-                        {cancelLabel}
-                    </button>
+                    {cancelLabel && (
+                        <button
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-md transition-colors"
+                        >
+                            {cancelLabel}
+                        </button>
+                    )}
                     <button
                         onClick={() => { onConfirm(); onClose(); }}
                         className="px-4 py-2 text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-md transition-colors shadow-sm"
