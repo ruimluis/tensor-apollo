@@ -4,13 +4,6 @@ import { useAuth } from '@/context/AuthProvider';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
-interface Exception {
-    id: string;
-    date: string;
-    hours: number;
-    reason: string;
-}
-
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useToast } from '@/components/ui/Toast';
 
