@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Target, BarChart2, Brain, CheckCircle2, ChevronRight, ArrowRight, ShieldCheck, Zap, Sun, Moon, TrendingDown, Link2Off, ClipboardX, Waypoints, Sparkles, FileText, PieChart, Link, MessageSquare, Library, Star, Puzzle, Workflow, BrainCircuit, History, Lightbulb, TrendingUp, User, Users, Building, Check, ChevronDown } from 'lucide-react';
+import { Target, Brain, CheckCircle2, ChevronRight, ArrowRight, ShieldCheck, Zap, Sun, Moon, TrendingDown, Link2Off, ClipboardX, Waypoints, Sparkles, FileText, PieChart, Link, MessageSquare, Library, Star, Puzzle, Workflow, BrainCircuit, History, Lightbulb, TrendingUp, User, Users, Building, Check, ChevronDown } from 'lucide-react';
 
 interface LandingPageProps {
     onLoginClick: () => void;
@@ -848,7 +848,7 @@ function Typewriter({ text, delay = 0, speed = 50 }: { text: string, delay?: num
             let index = 0;
             const interval = setInterval(() => {
                 if (index < text.length) {
-                    setDisplayedText((prev) => text.slice(0, index + 1));
+                    setDisplayedText(() => text.slice(0, index + 1));
                     index++;
                 } else {
                     clearInterval(interval);
