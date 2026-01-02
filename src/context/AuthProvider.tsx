@@ -3,6 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { LoginPage } from '@/components/auth/LoginPage';
 import { JoinPage } from '@/components/auth/JoinPage';
+import { LandingPage } from '@/components/landing/LandingPage';
 import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
@@ -17,6 +18,8 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
+    // State to control Landing Page vs Login Page
+    const [showLanding, setShowLanding] = useState(true);
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -53,7 +56,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (!session) {
-        return <LoginPage />;
+        if (showLanding) {
+            return <LandingPage onLoginClick={() => setShowLanding(false)} />;
+        }
+        return <LoginPage onBack={() => setShowLanding(true)} />;
     }
 
     return (

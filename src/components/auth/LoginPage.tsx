@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Target, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Target, Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
-export function LoginPage() {
+interface LoginPageProps {
+    onBack?: () => void;
+}
+
+export function LoginPage({ onBack }: LoginPageProps) {
     const [loading, setLoading] = useState(false);
     const [mode, setMode] = useState<'signin' | 'signup'>('signin');
     const [email, setEmail] = useState('');
@@ -51,7 +55,18 @@ export function LoginPage() {
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 animate-in fade-in-50">
-            <div className="w-full max-w-sm space-y-8 bg-card p-8 rounded-xl border border-border shadow-md">
+
+            {onBack && (
+                <button
+                    onClick={onBack}
+                    className="absolute top-4 left-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Home
+                </button>
+            )}
+
+            <div className="w-full max-w-sm space-y-8 bg-card p-8 rounded-xl border border-border shadow-md relative">
                 <div className="flex flex-col items-center text-center">
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-4">
                         <Target className="h-8 w-8 text-primary" />
